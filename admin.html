@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sol Bounty Admin | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0B0F19;
+            color: #FFFFFF;
+            line-height: 1.5;
+        }
+
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1F2937; }
+        ::-webkit-scrollbar-thumb { background: #9945FF; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7A3DD4; }
+
+        /* Layout */
+        .admin-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: #111827;
+            border-bottom: 1px solid #1F2937;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .logo-text h2 {
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 0.7rem;
+            color: #6B7280;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-stats {
+            display: flex;
+            gap: 20px;
+            margin-right: 20px;
+        }
+
+        .stat-chip {
+            background: #1F2937;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .stat-chip span {
+            color: #14F195;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+            flex: 1;
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #9CA3AF;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #9945FF;
+            transform: translateY(-2px);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #14F195;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-label {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 24px;
+            margin-bottom: 32px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #1F2937;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .section-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 span {
+            font-size: 1.5rem;
+        }
+
+        .refresh-btn {
+            background: #1F2937;
+            border: none;
+            color: #9CA3AF;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #374151;
+            color: white;
+        }
+
+        .section-content {
+            padding: 24px;
+        }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #14F195;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            background: #1F2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: white;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #9945FF;
+            box-shadow: 0 0 0 2px rgba(153, 69, 255, 0.2);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .checkbox-group input {
+            width: auto;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(153, 69, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: #1F2937;
+            border: 1px solid #374151;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #EF4444;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10B981;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #F59E0B;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Bounty Cards */
+        .bounties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .bounty-card {
+            background: #1F2937;
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .bounty-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .bounty-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #FFB648;
+            margin-bottom: 8px;
+        }
+
+        .bounty-desc {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .bounty-instructions {
+            background: #111827;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #D1D5DB;
+            margin-bottom: 12px;
+            border-left: 3px solid #9945FF;
+        }
+
+        .bounty-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .reward-badge {
+            background: rgba(255, 182, 72, 0.15);
+            color: #FFB648;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #10B981; }
+        .status-paused { background: rgba(245, 158, 11, 0.2); color: #F59E0B; }
+        .status-ended { background: rgba(239, 68, 68, 0.2); color: #EF4444; }
+
+        /* Submissions List */
+        .submissions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .submission-item {
+            background: #1F2937;
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .submission-info {
+            flex: 1;
+        }
+
+        .submission-nickname {
+            font-weight: 600;
+            color: #14F195;
+            margin-bottom: 4px;
+        }
+
+        .submission-details {
+            font-size: 0.85rem;
+            color: #9CA3AF;
+            margin-top: 8px;
+        }
+
+        .media-link {
+            color: #9945FF;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .media-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 24px;
+            padding: 28px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            cursor: pointer;
+            color: #9CA3AF;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #EF4444;
+        }
+
+        /* Login Gate */
+        .login-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0B0F19;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .login-card {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 20px;
+        }
+
+        .login-card h2 {
+            margin-bottom: 8px;
+        }
+
+        .login-card p {
+            color: #9CA3AF;
+            margin-bottom: 24px;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 14px;
+            background: #1F2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .error-msg {
+            color: #EF4444;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1F2937;
+            border-left: 4px solid #10B981;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            z-index: 3000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.error {
+            border-left-color: #EF4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #6B7280;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 16px;
+            }
+            .nav-container {
+                flex-direction: column;
+                height: auto;
+                padding: 12px 0;
+                gap: 12px;
+            }
+            .nav-stats {
+                order: 1;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .bounties-grid {
+                grid-template-columns: 1fr;
+            }
+            .submission-item {
+                flex-direction: column;
+            }
+            .action-group {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-wrapper">
+        
+        <!-- Login Gate -->
+        <div id="loginGate" class="login-gate">
+            <div class="login-card">
+                <div class="login-icon">🔐</div>
+                <h2>Admin Access</h2>
+                <p>Enter password to access the dashboard</p>
+                <input type="password" id="loginPassword" placeholder="Enter password">
+                <button class="btn-primary" onclick="login()" style="width: 100%;">Verify Access</button>
+                <div id="loginError" class="error-msg hidden">Invalid password</div>
+            </div>
+        </div>
+
+        <!-- Main Admin Dashboard -->
+        <div id="adminDashboard" class="hidden">
+            
+            <!-- Top Navigation -->
+            <nav class="top-nav">
+                <div class="nav-container">
+                    <div class="logo-area">
+                        <div class="logo-icon">🏴‍☠️</div>
+                        <div class="logo-text">
+                            <h2>Sol Bounty</h2>
+                            <p>Admin Dashboard</p>
+                        </div>
+                    </div>
+                    <div class="nav-actions">
+                        <div class="nav-stats" id="navStats">
+                            <div class="stat-chip">📋 <span id="navBountyCount">0</span> Bounties</div>
+                            <div class="stat-chip">📝 <span id="navSubCount">0</span> Submissions</div>
+                        </div>
+                        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-container">
+                
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <p>Manage your bounties, moderate submissions, and configure settings</p>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="stats-grid" id="statsOverview">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-value" id="totalBounties">0</div>
+                        <div class="stat-label">Total Bounties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="activeBounties">0</div>
+                        <div class="stat-label">Active Bounties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-value" id="totalSubmissions">0</div>
+                        <div class="stat-label">Total Submissions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-value" id="pendingSubmissions">0</div>
+                        <div class="stat-label">Pending Approval</div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Project Settings -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2><span>⚙️</span> Project Settings</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>🔗 Contract Address</label>
+                                <input type="text" id="contractAddress" placeholder="Enter Solana contract address">
+                            </div>
+                            <div class="form-group">
+                                <label>🐦 Official X (Twitter)</label>
+                                <input type="url" id="officialX" placeholder="https://x.com/...">
+                            </div>
+                            <div class="form-group">
+                                <label>👥 Community X Link</label>
+                                <input type="url" id="communityX" placeholder="https://x.com/i/communities/...">
+                            </div>
+                            <div class="form-group">
+                                <label>💰 Total Pooled SOL</label>
+                                <input type="number" id="totalPooledSol" step="0.1" placeholder="25" value="25">
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="showTokenStats">
+                                <label>📊 Show Token Stats on Public Page</label>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="saveSettings()" style="margin-top: 20px;">💾 Save Settings</button>
+                    </div>
+                </div>
+
+                <!-- Section 2: Create Bounty -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2><span>➕</span> Create New Bounty</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>📌 Title *</label>
+                                <input type="text" id="bountyTitle" placeholder="Enter bounty title">
+                            </div>
+                            <div class="form-group">
+                                <label>📝 Description *</label>
+                                <textarea id="bountyDesc" placeholder="Describe the bounty task..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>📖 Instructions *</label>
+                                <textarea id="bountyInstructions" placeholder="Step-by-step instructions for hunters..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>💰 Reward Pool (SOL) *</label>
+                                <input type="number" id="bountyReward" step="0.1" placeholder="Amount in SOL">
+                            </div>
+                            <div class="form-group">
+                                <label>📊 Status</label>
+                                <select id="bountyStatusSelect">
+                                    <option value="active">Active</option>
+                                    <option value="paused">Paused</option>
+                                    <option value="ended">Ended</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="createBounty()" style="margin-top: 20px;">🚀 Create Bounty</button>
+                    </div>
+                </div>
+
+                <!-- Section 3: Manage Bounties -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2><span>📋</span> Manage Bounties</h2>
+                        <button class="refresh-btn" onclick="loadAllBounties()">🔄 Refresh</button>
+                    </div>
+                    <div class="section-content">
+                        <div id="bountiesContainer">
+                            <div class="empty-state">Loading bounties...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Submissions Moderation -->
+                <div class="section">
+                    <div class="section-header">
+                        <h2><span>📝</span> Submissions Moderation</h2>
+                        <button class="refresh-btn" onclick="loadAllSubmissions()">🔄 Refresh</button>
+                    </div>
+                    <div class="section-content">
+                        <div id="submissionsContainer">
+                            <div class="empty-state">Loading submissions...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Edit Bounty Modal -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ Edit Bounty</h3>
+                <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <input type="hidden" id="editBountyId">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="editTitle">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editDesc" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Instructions</label>
+                <textarea id="editInstructions" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Reward (SOL)</label>
+                <input type="number" id="editReward" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editStatus">
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="ended">Ended</option>
+                </select>
+            </div>
+            <div class="action-group" style="margin-top: 20px;">
+                <button class="btn-primary" onclick="updateBounty()">💾 Save Changes</button>
+                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://jsrmgdaqqovdvrsfdyfb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impzcm1nZGFxcW92ZHZyc2ZkeWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjUxOTYsImV4cCI6MjA5NjUwMTE5Nn0.LwRM51qKUUaAv8TbO1Hv8X9454es6Ao35VDgSqKH4OM';
+        
+        let supabaseClient = null;
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (isError) toast.classList.add('error');
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ============================================
+        // LOGIN / LOGOUT
+        // ============================================
+        async function init() {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        async function login() {
+            const password = document.getElementById('loginPassword').value;
+            if (password === 'Jmelodies@20') {
+                document.getElementById('loginGate').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                await loadAllData();
+                showToast('Welcome to Sol Bounty Admin!');
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+                setTimeout(() => document.getElementById('loginError').classList.add('hidden'), 3000);
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginGate').classList.remove('hidden');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('loginPassword').value = '';
+            showToast('Logged out successfully');
+        }
+
+        // ============================================
+        // LOAD ALL DATA
+        // ============================================
+        async function loadAllData() {
+            await loadStats();
+            await loadSettings();
+            await loadAllBounties();
+            await loadAllSubmissions();
+        }
+
+        async function loadStats() {
+            const { count: totalBounties } = await supabaseClient.from('bounties').select('*', { count: 'exact', head: true });
+            const { count: activeBounties } = await supabaseClient.from('bounties').select('*', { count: 'exact', head: true }).eq('status', 'active');
+            const { count: totalSubmissions } = await supabaseClient.from('submissions').select('*', { count: 'exact', head: true });
+            const { count: pendingSubmissions } = await supabaseClient.from('submissions').select('*', { count: 'exact', head: true }).eq('approved', false);
+            
+            document.getElementById('totalBounties').textContent = totalBounties || 0;
+            document.getElementById('activeBounties').textContent = activeBounties || 0;
+            document.getElementById('totalSubmissions').textContent = totalSubmissions || 0;
+            document.getElementById('pendingSubmissions').textContent = pendingSubmissions || 0;
+            document.getElementById('navBountyCount').textContent = totalBounties || 0;
+            document.getElementById('navSubCount').textContent = totalSubmissions || 0;
+        }
+
+        // ============================================
+        // SETTINGS
+        // ============================================
+        async function loadSettings() {
+            const { data } = await supabaseClient.from('settings').select('*').eq('id', 1).single();
+            if (data) {
+                document.getElementById('contractAddress').value = data.contract_address || '';
+                document.getElementById('officialX').value = data.official_x || '';
+                document.getElementById('communityX').value = data.community_x || '';
+                document.getElementById('totalPooledSol').value = data.total_pooled_sol || 25;
+                document.getElementById('showTokenStats').checked = data.show_token_stats || false;
+            }
+        }
+
+        async function saveSettings() {
+            const settings = {
+                id: 1,
+                contract_address: document.getElementById('contractAddress').value,
+                official_x: document.getElementById('officialX').value,
+                community_x: document.getElementById('communityX').value,
+                total_pooled_sol: parseFloat(document.getElementById('totalPooledSol').value) || 0,
+                show_token_stats: document.getElementById('showTokenStats').checked,
+                updated_at: new Date()
+            };
+            const { error } = await supabaseClient.from('settings').upsert(settings);
+            if (error) showToast('Error saving settings', true);
+            else showToast('Settings saved!');
+        }
+
+        // ============================================
+        // BOUNTIES
+        // ============================================
+        async function createBounty() {
+            const title = document.getElementById('bountyTitle').value;
+            const desc = document.getElementById('bountyDesc').value;
+            const instructions = document.getElementById('bountyInstructions').value;
+            const reward = parseFloat(document.getElementById('bountyReward').value);
+            const status = document.getElementById('bountyStatusSelect').value;
+            
+            if (!title || !desc || !instructions || !reward) {
+                showToast('Please fill all fields', true);
+                return;
+            }
+            
+            const { error } = await supabaseClient.from('bounties').insert({
+                title, description: desc, instructions, reward_pool: reward, status, created_at: new Date()
+            });
+            
+            if (error) showToast('Error: ' + error.message, true);
+            else {
+                showToast('Bounty created!');
+                document.getElementById('bountyTitle').value = '';
+                document.getElementById('bountyDesc').value = '';
+                document.getElementById('bountyInstructions').value = '';
+                document.getElementById('bountyReward').value = '';
+                await loadAllBounties();
+                await loadStats();
+            }
+        }
+
+        async function loadAllBounties() {
+            const { data } = await supabaseClient.from('bounties').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('bountiesContainer');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="empty-state">No bounties yet. Create one above!</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="bounties-grid">
+                    ${data.map(bounty => `
+                        <div class="bounty-card">
+                            <div class="bounty-title">${escapeHtml(bounty.title)}</div>
+                            <div class="bounty-desc">${escapeHtml(bounty.description.substring(0, 100))}${bounty.description.length > 100 ? '...' : ''}</div>
+                            ${bounty.instructions ? `<div class="bounty-instructions">📝 ${escapeHtml(bounty.instructions.substring(0, 80))}${bounty.instructions.length > 80 ? '...' : ''}</div>` : ''}
+                            <div class="bounty-meta">
+                                <span class="reward-badge">💰 ${bounty.reward_pool} SOL</span>
+                                <span class="status-badge status-${bounty.status}">${bounty.status}</span>
+                            </div>
+                            <div class="action-group">
+                                <button class="btn-secondary" onclick="openEditModal('${bounty.id}')">✏️ Edit</button>
+                                <button class="btn-warning" onclick="toggleBountyStatus('${bounty.id}', '${bounty.status}')">${bounty.status === 'active' ? '⏸️ Pause' : bounty.status === 'paused' ? '▶️ Activate' : '🔚 Ended'}</button>
+                                <button class="btn-danger" onclick="deleteBounty('${bounty.id}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openEditModal(bountyId) {
+            document.getElementById('editModal').classList.remove('hidden');
+            loadBountyForEdit(bountyId);
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        async function loadBountyForEdit(bountyId) {
+            const { data } = await supabaseClient.from('bounties').select('*').eq('id', bountyId).single();
+            if (data) {
+                document.getElementById('editBountyId').value = data.id;
+                document.getElementById('editTitle').value = data.title;
+                document.getElementById('editDesc').value = data.description;
+                document.getElementById('editInstructions').value = data.instructions || '';
+                document.getElementById('editReward').value = data.reward_pool;
+                document.getElementById('editStatus').value = data.status;
+            }
+        }
+
+        async function updateBounty() {
+            const bountyId = document.getElementById('editBountyId').value;
+            const { error } = await supabaseClient.from('bounties').update({
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDesc').value,
+                instructions: document.getElementById('editInstructions').value,
+                reward_pool: parseFloat(document.getElementById('editReward').value),
+                status: document.getElementById('editStatus').value
+            }).eq('id', bountyId);
+            
+            if (error) showToast('Error updating bounty', true);
+            else {
+                showToast('Bounty updated!');
+                closeEditModal();
+                await loadAllBounties();
+            }
+        }
+
+        async function toggleBountyStatus(bountyId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+            const { error } = await supabaseClient.from('bounties').update({ status: newStatus }).eq('id', bountyId);
+            if (error) showToast('Error updating status', true);
+            else {
+                showToast(`Bounty ${newStatus === 'active' ? 'activated' : 'paused'}`);
+                await loadAllBounties();
+                await loadStats();
+            }
+        }
+
+        async function deleteBounty(bountyId) {
+            if (!confirm('⚠️ Delete this bounty? ALL submissions will be deleted too!')) return;
+            const { error } = await supabaseClient.from('bounties').delete().eq('id', bountyId);
+            if (error) showToast('Error deleting bounty', true);
+            else {
+                showToast('Bounty deleted');
+                await loadAllBounties();
+                await loadAllSubmissions();
+                await loadStats();
+            }
+        }
+
+        // ============================================
+        // SUBMISSIONS
+        // ============================================
+        async function loadAllSubmissions() {
+            const { data } = await supabaseClient.from('submissions').select('*, bounties(title)').order('created_at', { ascending: false });
+            const container = document.getElementById('submissionsContainer');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="empty-state">No submissions yet</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="submissions-list">
+                    ${data.map(sub => `
+                        <div class="submission-item">
+                            <div class="submission-info">
+                                <div class="submission-nickname">🎭 ${escapeHtml(sub.nickname)}</div>
+                                <div><strong>Bounty:</strong> ${escapeHtml(sub.bounties?.title || 'Unknown')}</div>
+                                ${sub.note ? `<div class="submission-details">💬 ${escapeHtml(sub.note)}</div>` : ''}
+                                <div class="submission-details">📅 ${new Date(sub.created_at).toLocaleString()}</div>
+                                <div class="submission-details">Status: <span style="color: ${sub.approved ? '#10B981' : '#F59E0B'}">${sub.approved ? 'Approved' : 'Pending'}</span></div>
+                                <a href="${sub.media_url}" target="_blank" class="media-link">📎 View Media</a>
+                            </div>
+                            <div class="action-group">
+                                <button class="btn-success" onclick="toggleApprove('${sub.id}', ${!sub.approved})">${sub.approved ? '❌ Reject' : '✅ Approve'}</button>
+                                <button class="btn-danger" onclick="deleteSubmission('${sub.id}', '${sub.media_url}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function toggleApprove(submissionId, approve) {
+            const { error } = await supabaseClient.from('submissions').update({ approved: approve }).eq('id', submissionId);
+            if (error) showToast('Error updating submission', true);
+            else {
+                showToast(`Submission ${approve ? 'approved' : 'rejected'}`);
+                await loadAllSubmissions();
+                await loadStats();
+            }
+        }
+
+        async function deleteSubmission(submissionId, mediaUrl) {
+            if (!confirm('Delete this submission?')) return;
+            if (mediaUrl) {
+                const filePath = mediaUrl.split('/').slice(-3).join('/');
+                await supabaseClient.storage.from('bounty-media').remove([filePath]);
+            }
+            const { error } = await supabaseClient.from('submissions').delete().eq('id', submissionId);
+            if (error) showToast('Error deleting submission', true);
+            else {
+                showToast('Submission deleted');
+                await loadAllSubmissions();
+                await loadStats();
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        init();
+    </script>
+</body>
+</html>

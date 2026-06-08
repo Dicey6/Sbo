@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sol Bounty Admin - Simple</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #0B0F19; color: white; }
+        input, textarea, select { display: block; width: 100%; margin: 10px 0; padding: 10px; background: #1F2937; color: white; border: 1px solid #374151; border-radius: 8px; }
+        button { background: #9945FF; color: white; padding: 12px; border: none; border-radius: 8px; margin: 10px 0; }
+        .success { color: #14F195; }
+        .error { color: #EF4444; }
+        .card { background: #111827; padding: 20px; margin: 20px 0; border-radius: 16px; }
+        pre { background: #000; padding: 10px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Sol Bounty Admin (Debug Mode)</h1>
+    
+    <div id="status" class="card">
+        <strong>📡 Status:</strong> <span id="statusText">Initializing...</span>
+    </div>
+    
+    <div id="debug" class="card">
+        <strong>🐛 Debug Log:</strong>
+        <pre id="debugLog">Waiting for actions...</pre>
+    </div>
+    
+    <!-- Password Section -->
+    <div id="passwordSection" class="card">
+        <h2>🔐 Login</h2>
+        <input type="password" id="password" placeholder="Enter password">
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <!-- Admin Section (hidden until login) -->
+    <div id="adminSection" style="display:none;">
+        
+        <!-- Create Bounty -->
+        <div class="card">
+            <h2>➕ Create Bounty</h2>
+            <input type="text" id="title" placeholder="Title">
+            <textarea id="desc" placeholder="Description" rows="2"></textarea>
+            <textarea id="instructions" placeholder="Instructions" rows="3"></textarea>
+            <input type="number" id="reward" placeholder="Reward (SOL)">
+            <select id="status">
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+            </select>
+            <button onclick="createBounty()">Create Bounty</button>
+        </div>
+        
+        <!-- Load Bounties -->
+        <div class="card">
+            <h2>📋 Bounties</h2>
+            <button onclick="loadBounties()">Refresh Bounties</button>
+            <div id="bountiesList">Click refresh to load</div>
+        </div>
+        
+        <!-- Settings -->
+        <div class="card">
+            <h2>⚙️ Settings</h2>
+            <input type="text" id="contractAddr" placeholder="Contract Address">
+            <input type="text" id="totalPool" placeholder="Total Pool SOL">
+            <button onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script>
+        // Supabase config
+        const SUPABASE_URL = 'https://jsrmgdaqqovdvrsfdyfb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impzcm1nZGFxcW92ZHZyc2ZkeWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjUxOTYsImV4cCI6MjA5NjUwMTE5Nn0.LwRM51qKUUaAv8TbO1Hv8X9454es6Ao35VDgSqKH4OM';
+        
+        let supabaseClient = null;
+        let isLoggedIn = false;
+        
+        function addLog(msg, isError = false) {
+            const logDiv = document.getElementById('debugLog');
+            const time = new Date().toLocaleTimeString();
+            const prefix = isError ? '❌' : '✅';
+            logDiv.innerHTML += `[${time}] ${prefix} ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+        
+        async function init() {
+            addLog('Initializing Supabase...');
+            try {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                addLog('Supabase client created');
+                
+                // Test connection
+                const { data, error } = await supabaseClient.from('settings').select('*');
+                if (error) {
+                    addLog('Connection test failed: ' + error.message, true);
+                    document.getElementById('statusText').innerHTML = '<span class="error">❌ Supabase error: ' + error.message + '</span>';
+                } else {
+                    addLog('Connection successful! Found ' + (data?.length || 0) + ' settings');
+                    document.getElementById('statusText').innerHTML = '<span class="success">✅ Connected to Supabase!</span>';
+                }
+            } catch (err) {
+                addLog('Fatal error: ' + err.message, true);
+                document.getElementById('statusText').innerHTML = '<span class="error">❌ ' + err.message + '</span>';
+            }
+        }
+        
+        async function login() {
+            const password = document.getElementById('password').value;
+            addLog('Login attempt...');
+            
+            if (password === 'Jmelodies@20') {
+                isLoggedIn = true;
+                addLog('Login successful!');
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminSection').style.display = 'block';
+                loadBounties();
+                loadSettings();
+            } else {
+                addLog('Invalid password', true);
+                alert('Wrong password!');
+            }
+        }
+        
+        async function createBounty() {
+            addLog('Create bounty button clicked');
+            
+            const title = document.getElementById('title').value;
+            const desc = document.getElementById('desc').value;
+            const instructions = document.getElementById('instructions').value;
+            const reward = parseFloat(document.getElementById('reward').value);
+            const status = document.getElementById('status').value;
+            
+            if (!title || !desc || !instructions || !reward) {
+                addLog('Missing required fields', true);
+                alert('Please fill all fields');
+                return;
+            }
+            
+            addLog('Creating bounty: ' + title);
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('bounties')
+                    .insert({
+                        title: title,
+                        description: desc,
+                        instructions: instructions,
+                        reward_pool: reward,
+                        status: status,
+                        created_at: new Date()
+                    })
+                    .select();
+                
+                if (error) {
+                    addLog('Error: ' + error.message, true);
+                    alert('Error: ' + error.message);
+                } else {
+                    addLog('Bounty created successfully! ID: ' + data[0].id);
+                    alert('✅ Bounty created!');
+                    document.getElementById('title').value = '';
+                    document.getElementById('desc').value = '';
+                    document.getElementById('instructions').value = '';
+                    document.getElementById('reward').value = '';
+                    loadBounties();
+                }
+            } catch (err) {
+                addLog('Exception: ' + err.message, true);
+                alert('Exception: ' + err.message);
+            }
+        }
+        
+        async function loadBounties() {
+            addLog('Loading bounties...');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('bounties')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    addLog('Error loading: ' + error.message, true);
+                } else {
+                    addLog('Loaded ' + (data?.length || 0) + ' bounties');
+                    const listDiv = document.getElementById('bountiesList');
+                    if (data && data.length > 0) {
+                        listDiv.innerHTML = data.map(b => `
+                            <div style="border-bottom:1px solid #374151; padding:10px;">
+                                <strong>${b.title}</strong><br>
+                                🏆 ${b.reward_pool} SOL | Status: ${b.status}
+                            </div>
+                        `).join('');
+                    } else {
+                        listDiv.innerHTML = '<p>No bounties yet. Create one!</p>';
+                    }
+                }
+            } catch (err) {
+                addLog('Exception: ' + err.message, true);
+            }
+        }
+        
+        async function loadSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('settings')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+                
+                if (!error && data) {
+                    document.getElementById('contractAddr').value = data.contract_address || '';
+                    document.getElementById('totalPool').value = data.total_pooled_sol || 25;
+                    addLog('Settings loaded');
+                }
+            } catch (err) {
+                addLog('Error loading settings: ' + err.message, true);
+            }
+        }
+        
+        async function saveSettings() {
+            addLog('Saving settings...');
+            try {
+                const { error } = await supabaseClient
+                    .from('settings')
+                    .upsert({
+                        id: 1,
+                        contract_address: document.getElementById('contractAddr').value,
+                        total_pooled_sol: parseFloat(document.getElementById('totalPool').value) || 25,
+                        updated_at: new Date()
+                    });
+                
+                if (error) {
+                    addLog('Error: ' + error.message, true);
+                    alert('Error: ' + error.message);
+                } else {
+                    addLog('Settings saved!');
+                    alert('✅ Settings saved!');
+                }
+            } catch (err) {
+                addLog('Exception: ' + err.message, true);
+                alert('Exception: ' + err.message);
+            }
+        }
+        
+        // Start the app
+        init();
+    </script>
+</body>
+</html>

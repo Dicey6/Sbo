@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sol Bounty - Full Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; background: #0B0F19; color: white; }
+        
+        input, textarea, select { width: 100%; margin: 10px 0; padding: 12px; background: #1F2937; color: white; border: 1px solid #374151; border-radius: 8px; font-size: 14px; }
+        button { background: #9945FF; color: white; padding: 12px 20px; border: none; border-radius: 8px; margin: 10px 5px; cursor: pointer; font-size: 14px; }
+        button:hover { opacity: 0.9; }
+        .btn-danger { background: #EF4444; }
+        .btn-success { background: #10B981; }
+        .btn-warning { background: #F59E0B; }
+        
+        .card { background: #111827; padding: 20px; margin: 20px 0; border-radius: 16px; border: 1px solid #374151; }
+        .card h2, .card h3 { margin-bottom: 15px; color: #14F195; }
+        
+        .bounty-item, .submission-item { background: #1F2937; padding: 15px; margin: 10px 0; border-radius: 12px; border-left: 3px solid #9945FF; }
+        .bounty-item strong, .submission-item strong { color: #FFB648; font-size: 16px; }
+        
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-active { background: rgba(16,185,129,0.2); color: #10B981; }
+        .status-paused { background: rgba(245,158,11,0.2); color: #F59E0B; }
+        .status-ended { background: rgba(239,68,68,0.2); color: #EF4444; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #111827; padding: 25px; border-radius: 16px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
+        .hidden { display: none; }
+        
+        .toast { position: fixed; top: 20px; right: 20px; background: #111827; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #10B981; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast.error { border-left-color: #EF4444; }
+        
+        .debug-panel { background: #000; padding: 10px; font-family: monospace; font-size: 11px; color: #0f0; max-height: 150px; overflow-y: auto; border-radius: 8px; margin-top: 10px; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .button-group { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <h1>⚙️ Sol Bounty - Full Admin Panel</h1>
+    
+    <!-- Debug Panel -->
+    <div class="card">
+        <strong>🐛 Debug Console:</strong>
+        <div id="debugLog" class="debug-panel">Initializing...</div>
+    </div>
+    
+    <!-- Login Section -->
+    <div id="loginSection" class="card">
+        <h3>🔐 Admin Login</h3>
+        <input type="password" id="adminPassword" placeholder="Enter password">
+        <button onclick="login()">Login</button>
+    </div>
+    
+    <!-- Main Admin Panel (hidden until login) -->
+    <div id="adminPanel" style="display:none;">
+        
+        <!-- ========== SECTION 1: PROJECT SETTINGS ========== -->
+        <div class="card">
+            <h2>📋 Project Settings</h2>
+            <input type="text" id="contractAddress" placeholder="Contract Address">
+            <input type="text" id="officialX" placeholder="Official X (Twitter) Link">
+            <input type="text" id="communityX" placeholder="Community X Link">
+            <input type="number" id="totalPooledSol" step="0.1" placeholder="Total Pooled SOL" value="25">
+            <label style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                <input type="checkbox" id="showTokenStats"> Show Token Stats on Public Page
+            </label>
+            <button onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+        
+        <!-- ========== SECTION 2: CREATE BOUNTY ========== -->
+        <div class="card">
+            <h2>➕ Create New Bounty</h2>
+            <input type="text" id="bountyTitle" placeholder="Title *">
+            <textarea id="bountyDesc" rows="2" placeholder="Description *"></textarea>
+            <textarea id="bountyInstructions" rows="3" placeholder="Instructions for hunters *"></textarea>
+            <input type="number" id="bountyReward" step="0.1" placeholder="Reward Pool (SOL) *">
+            <select id="bountyStatusSelect">
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="ended">Ended</option>
+            </select>
+            <button onclick="createBounty()">🚀 Create Bounty</button>
+        </div>
+        
+        <!-- ========== SECTION 3: MANAGE BOUNTIES ========== -->
+        <div class="card">
+            <h2>📋 Manage Bounties</h2>
+            <button onclick="loadAllBounties()">🔄 Refresh Bounties</button>
+            <div id="bountiesList">Click refresh to load bounties</div>
+        </div>
+        
+        <!-- ========== SECTION 4: MANAGE SUBMISSIONS ========== -->
+        <div class="card">
+            <h2>📝 Manage Submissions</h2>
+            <button onclick="loadAllSubmissions()">🔄 Refresh Submissions</button>
+            <div id="submissionsList">Click refresh to load submissions</div>
+        </div>
+        
+        <!-- ========== SECTION 5: STATISTICS ========== -->
+        <div class="card">
+            <h2>📊 Statistics</h2>
+            <div id="statsInfo">Loading...</div>
+        </div>
+    </div>
+    
+    <!-- Edit Bounty Modal -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>✏️ Edit Bounty</h3>
+            <input type="hidden" id="editBountyId">
+            <input type="text" id="editTitle" placeholder="Title">
+            <textarea id="editDesc" rows="2" placeholder="Description"></textarea>
+            <textarea id="editInstructions" rows="3" placeholder="Instructions"></textarea>
+            <input type="number" id="editReward" step="0.1" placeholder="Reward">
+            <select id="editStatus">
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="ended">Ended</option>
+            </select>
+            <div class="button-group">
+                <button onclick="updateBounty()">💾 Save Changes</button>
+                <button onclick="closeEditModal()" style="background: #6B7280;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://jsrmgdaqqovdvrsfdyfb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impzcm1nZGFxcW92ZHZyc2ZkeWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjUxOTYsImV4cCI6MjA5NjUwMTE5Nn0.LwRM51qKUUaAv8TbO1Hv8X9454es6Ao35VDgSqKH4OM';
+        
+        let supabaseClient = null;
+        
+        function addLog(msg, isError = false) {
+            const logDiv = document.getElementById('debugLog');
+            const time = new Date().toLocaleTimeString();
+            const prefix = isError ? '❌' : '✅';
+            logDiv.innerHTML = `[${time}] ${prefix} ${msg}\n` + logDiv.innerHTML;
+            console.log(msg);
+        }
+        
+        function showToast(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (isError) toast.classList.add('error');
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // ============================================
+        // INIT & LOGIN
+        // ============================================
+        async function init() {
+            addLog('Initializing Supabase...');
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            addLog('Supabase client created');
+            
+            const { data, error } = await supabaseClient.from('settings').select('*');
+            if (error) {
+                addLog('Connection error: ' + error.message, true);
+            } else {
+                addLog('Connected! Found ' + (data?.length || 0) + ' settings');
+            }
+        }
+        
+        async function login() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'Jmelodies@20') {
+                addLog('Login successful');
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAllBounties();
+                loadAllSubmissions();
+                loadSettings();
+                loadStats();
+                showToast('Welcome, Admin!');
+            } else {
+                addLog('Invalid password', true);
+                showToast('Invalid password!', true);
+            }
+        }
+        
+        // ============================================
+        // SETTINGS
+        // ============================================
+        async function loadSettings() {
+            const { data, error } = await supabaseClient
+                .from('settings')
+                .select('*')
+                .eq('id', 1)
+                .single();
+            
+            if (!error && data) {
+                document.getElementById('contractAddress').value = data.contract_address || '';
+                document.getElementById('officialX').value = data.official_x || '';
+                document.getElementById('communityX').value = data.community_x || '';
+                document.getElementById('totalPooledSol').value = data.total_pooled_sol || 25;
+                document.getElementById('showTokenStats').checked = data.show_token_stats || false;
+                addLog('Settings loaded');
+            }
+        }
+        
+        async function saveSettings() {
+            addLog('Saving settings...');
+            const settings = {
+                id: 1,
+                contract_address: document.getElementById('contractAddress').value,
+                official_x: document.getElementById('officialX').value,
+                community_x: document.getElementById('communityX').value,
+                total_pooled_sol: parseFloat(document.getElementById('totalPooledSol').value) || 0,
+                show_token_stats: document.getElementById('showTokenStats').checked,
+                updated_at: new Date()
+            };
+            
+            const { error } = await supabaseClient
+                .from('settings')
+                .upsert(settings);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error saving settings', true);
+            } else {
+                addLog('Settings saved!');
+                showToast('✅ Settings saved!');
+            }
+        }
+        
+        // ============================================
+        // CREATE & MANAGE BOUNTIES
+        // ============================================
+        async function createBounty() {
+            const title = document.getElementById('bountyTitle').value;
+            const desc = document.getElementById('bountyDesc').value;
+            const instructions = document.getElementById('bountyInstructions').value;
+            const reward = parseFloat(document.getElementById('bountyReward').value);
+            const status = document.getElementById('bountyStatusSelect').value;
+            
+            if (!title || !desc || !instructions || !reward) {
+                showToast('Please fill all fields', true);
+                return;
+            }
+            
+            addLog('Creating bounty: ' + title);
+            
+            const { data, error } = await supabaseClient
+                .from('bounties')
+                .insert({
+                    title: title,
+                    description: desc,
+                    instructions: instructions,
+                    reward_pool: reward,
+                    status: status,
+                    created_at: new Date()
+                })
+                .select();
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error: ' + error.message, true);
+            } else {
+                addLog('Bounty created! ID: ' + data[0].id);
+                showToast('✅ Bounty created!');
+                
+                // Clear form
+                document.getElementById('bountyTitle').value = '';
+                document.getElementById('bountyDesc').value = '';
+                document.getElementById('bountyInstructions').value = '';
+                document.getElementById('bountyReward').value = '';
+                
+                loadAllBounties();
+                loadStats();
+            }
+        }
+        
+        async function loadAllBounties() {
+            addLog('Loading all bounties...');
+            const { data, error } = await supabaseClient
+                .from('bounties')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+            } else {
+                addLog('Loaded ' + (data?.length || 0) + ' bounties');
+                const container = document.getElementById('bountiesList');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p>No bounties yet. Create one above!</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(bounty => `
+                    <div class="bounty-item">
+                        <strong>${escapeHtml(bounty.title)}</strong>
+                        <p style="margin: 5px 0; color: #9CA3AF;">${escapeHtml(bounty.description)}</p>
+                        <p style="margin: 5px 0;"><strong>Instructions:</strong> ${escapeHtml(bounty.instructions?.substring(0, 100))}${bounty.instructions?.length > 100 ? '...' : ''}</p>
+                        <div style="margin: 10px 0;">
+                            <span class="status-badge status-${bounty.status}">${bounty.status.toUpperCase()}</span>
+                            <span style="margin-left: 10px;">💰 ${bounty.reward_pool} SOL</span>
+                            <span style="margin-left: 10px;">📅 ${new Date(bounty.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="button-group">
+                            <button onclick="openEditModal('${bounty.id}')">✏️ Edit</button>
+                            <button onclick="toggleBountyStatus('${bounty.id}', '${bounty.status}')" class="btn-warning">
+                                ${bounty.status === 'active' ? '⏸️ Pause' : bounty.status === 'paused' ? '▶️ Activate' : '🔚 Ended'}
+                            </button>
+                            <button onclick="deleteBounty('${bounty.id}')" class="btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function openEditModal(bountyId) {
+            addLog('Opening edit modal for: ' + bountyId);
+            document.getElementById('editModal').classList.remove('hidden');
+            loadBountyForEdit(bountyId);
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+        
+        async function loadBountyForEdit(bountyId) {
+            const { data, error } = await supabaseClient
+                .from('bounties')
+                .select('*')
+                .eq('id', bountyId)
+                .single();
+            
+            if (!error && data) {
+                document.getElementById('editBountyId').value = data.id;
+                document.getElementById('editTitle').value = data.title;
+                document.getElementById('editDesc').value = data.description;
+                document.getElementById('editInstructions').value = data.instructions || '';
+                document.getElementById('editReward').value = data.reward_pool;
+                document.getElementById('editStatus').value = data.status;
+            }
+        }
+        
+        async function updateBounty() {
+            const bountyId = document.getElementById('editBountyId').value;
+            addLog('Updating bounty: ' + bountyId);
+            
+            const { error } = await supabaseClient
+                .from('bounties')
+                .update({
+                    title: document.getElementById('editTitle').value,
+                    description: document.getElementById('editDesc').value,
+                    instructions: document.getElementById('editInstructions').value,
+                    reward_pool: parseFloat(document.getElementById('editReward').value),
+                    status: document.getElementById('editStatus').value
+                })
+                .eq('id', bountyId);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error updating bounty', true);
+            } else {
+                addLog('Bounty updated!');
+                showToast('✅ Bounty updated!');
+                closeEditModal();
+                loadAllBounties();
+            }
+        }
+        
+        async function toggleBountyStatus(bountyId, currentStatus) {
+            let newStatus = currentStatus === 'active' ? 'paused' : 'active';
+            addLog('Changing status: ' + currentStatus + ' → ' + newStatus);
+            
+            const { error } = await supabaseClient
+                .from('bounties')
+                .update({ status: newStatus })
+                .eq('id', bountyId);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error updating status', true);
+            } else {
+                addLog('Status changed!');
+                showToast('✅ Status updated!');
+                loadAllBounties();
+            }
+        }
+        
+        async function deleteBounty(bountyId) {
+            if (!confirm('⚠️ Delete this bounty? ALL submissions will be deleted too!')) return;
+            
+            addLog('Deleting bounty: ' + bountyId);
+            
+            const { error } = await supabaseClient
+                .from('bounties')
+                .delete()
+                .eq('id', bountyId);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error deleting bounty', true);
+            } else {
+                addLog('Bounty deleted!');
+                showToast('✅ Bounty deleted!');
+                loadAllBounties();
+                loadAllSubmissions();
+                loadStats();
+            }
+        }
+        
+        // ============================================
+        // MANAGE SUBMISSIONS
+        // ============================================
+        async function loadAllSubmissions() {
+            addLog('Loading all submissions...');
+            const { data, error } = await supabaseClient
+                .from('submissions')
+                .select('*, bounties(title)')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+            } else {
+                addLog('Loaded ' + (data?.length || 0) + ' submissions');
+                const container = document.getElementById('submissionsList');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p>No submissions yet</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(sub => `
+                    <div class="submission-item">
+                        <strong>🎭 ${escapeHtml(sub.nickname)}</strong>
+                        <p><strong>Bounty:</strong> ${escapeHtml(sub.bounties?.title || 'Unknown')}</p>
+                        <p><strong>Note:</strong> ${escapeHtml(sub.note || 'No note')}</p>
+                        <p><strong>Status:</strong> <span style="color: ${sub.approved ? '#10B981' : '#F59E0B'}">${sub.approved ? 'Approved' : 'Pending'}</span></p>
+                        <p><strong>Submitted:</strong> ${new Date(sub.created_at).toLocaleString()}</p>
+                        <div class="button-group">
+                            <a href="${sub.media_url}" target="_blank" style="background: #9945FF; color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none;">📎 View Media</a>
+                            <button onclick="toggleApprove('${sub.id}', ${!sub.approved})" class="btn-success">
+                                ${sub.approved ? '❌ Reject' : '✅ Approve'}
+                            </button>
+                            <button onclick="deleteSubmission('${sub.id}', '${sub.media_url}')" class="btn-danger">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        async function toggleApprove(submissionId, approve) {
+            addLog('Setting approval to: ' + approve);
+            
+            const { error } = await supabaseClient
+                .from('submissions')
+                .update({ approved: approve })
+                .eq('id', submissionId);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error updating submission', true);
+            } else {
+                addLog('Submission updated!');
+                showToast('✅ Submission ' + (approve ? 'approved!' : 'rejected!'));
+                loadAllSubmissions();
+                loadStats();
+            }
+        }
+        
+        async function deleteSubmission(submissionId, mediaUrl) {
+            if (!confirm('Delete this submission?')) return;
+            
+            addLog('Deleting submission: ' + submissionId);
+            
+            // Try to delete from storage
+            if (mediaUrl) {
+                const filePath = mediaUrl.split('/').slice(-3).join('/');
+                await supabaseClient.storage.from('bounty-media').remove([filePath]);
+            }
+            
+            const { error } = await supabaseClient
+                .from('submissions')
+                .delete()
+                .eq('id', submissionId);
+            
+            if (error) {
+                addLog('Error: ' + error.message, true);
+                showToast('Error deleting submission', true);
+            } else {
+                addLog('Submission deleted!');
+                showToast('✅ Submission deleted!');
+                loadAllSubmissions();
+                loadStats();
+            }
+        }
+        
+        // ============================================
+        // STATISTICS
+        // ============================================
+        async function loadStats() {
+            const { count: bountyCount } = await supabaseClient
+                .from('bounties')
+                .select('*', { count: 'exact', head: true });
+            
+            const { count: submissionCount } = await supabaseClient
+                .from('submissions')
+                .select('*', { count: 'exact', head: true });
+            
+            const { count: pendingCount } = await supabaseClient
+                .from('submissions')
+                .select('*', { count: 'exact', head: true })
+                .eq('approved', false);
+            
+            const { count: activeBounties } = await supabaseClient
+                .from('bounties')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'active');
+            
+            document.getElementById('statsInfo').innerHTML = `
+                <p>📋 Total Bounties: ${bountyCount || 0}</p>
+                <p>🎯 Active Bounties: ${activeBounties || 0}</p>
+                <p>📝 Total Submissions: ${submissionCount || 0}</p>
+                <p>⏳ Pending Approval: ${pendingCount || 0}</p>
+            `;
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
